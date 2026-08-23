@@ -1,15 +1,13 @@
 package com.bhumi.eventscoring_backend;
 
+import com.bhumi.eventscoring_backend.dto.UserView;
+import org.springframework.security.core.Authentication;
 import com.bhumi.eventscoring_backend.dto.RegisterRequest;
 import com.bhumi.eventscoring_backend.model.User;
 import com.bhumi.eventscoring_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.bhumi.eventscoring_backend.dto.LoginRequest;
 import java.util.Optional;
 
@@ -27,6 +25,17 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @GetMapping("/me")
+    public UserView getCurrentUser(Authentication authentication) {
+        String email = authentication.getName();
+        User user = userRepository.findAll().stream()
+                .filter(u -> u.getEmail().equals(email))
+                .findFirst()
+                .orElseThrow();
+
+        return new UserView(user.getId(), user.getName(), user.getEmail(), user.getRole());
+    }
+
     @PostMapping("/register")         // when someone sends a POST request to /register run the method below
     public String register(@RequestBody RegisterRequest request) {
         User user = new User();
@@ -38,6 +47,7 @@ public class AuthController {
         userRepository.save(user);
         return "User registered successfully";
     }
+
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest request) {
         Optional<User> userOpt = userRepository.findAll().stream()

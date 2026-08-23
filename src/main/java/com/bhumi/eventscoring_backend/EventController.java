@@ -1,6 +1,7 @@
 package com.bhumi.eventscoring_backend;
 
 import com.bhumi.eventscoring_backend.dto.CategoryRequest;
+import com.bhumi.eventscoring_backend.dto.CategoryView;
 import com.bhumi.eventscoring_backend.dto.EventRequest;
 import com.bhumi.eventscoring_backend.model.Category;
 import com.bhumi.eventscoring_backend.model.Event;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/events")
@@ -46,6 +48,14 @@ public class EventController {
         event.setOrganizer(organizer);
 
         return eventRepository.save(event);
+    }
+
+    @GetMapping("/{id}/categories")
+    public List<CategoryView> getCategories(@PathVariable Long id) {
+        return categoryRepository.findAll().stream()
+                .filter(c -> c.getEvent().getId().equals(id))
+                .map(c -> new CategoryView(c.getId(), c.getName()))
+                .collect(Collectors.toList());
     }
 
     @GetMapping
