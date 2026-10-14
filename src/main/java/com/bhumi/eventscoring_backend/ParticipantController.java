@@ -1,5 +1,8 @@
 package com.bhumi.eventscoring_backend;
 
+import com.bhumi.eventscoring_backend.dto.ParticipantView;
+import java.util.List;
+import java.util.stream.Collectors;
 import com.bhumi.eventscoring_backend.model.Category;
 import com.bhumi.eventscoring_backend.model.Participant;
 import com.bhumi.eventscoring_backend.model.User;
@@ -26,6 +29,14 @@ public class ParticipantController {
     @Autowired
     private UserRepository userRepository;
 
+    @GetMapping("/{id}/participants")
+    public List<ParticipantView> getParticipants(@PathVariable Long id) {
+        return participantRepository.findAll().stream()
+                .filter(p -> p.getCategory().getId().equals(id))
+                .map(p -> new ParticipantView(p.getId(), p.getUser().getName()))
+                .collect(Collectors.toList());
+    }
+
     @PostMapping("/{id}/register")
     public Participant register(@PathVariable Long id, Authentication authentication) {
         String userEmail = authentication.getName();
@@ -39,6 +50,14 @@ public class ParticipantController {
 
         if (categoryOpt.isEmpty()) {
             throw new RuntimeException("Category not found");
+        }
+
+        boolean alreadyRegistered = participantRepository.findAll().stream()
+                .anyMatch(p -> p.getUser().getId().equals(user.getId())
+                        && p.getCategory().getId().equals(id));
+
+        if (alreadyRegistered) {
+            throw new RuntimeException("You are already registered for this category");
         }
 
         Participant participant = new Participant();
