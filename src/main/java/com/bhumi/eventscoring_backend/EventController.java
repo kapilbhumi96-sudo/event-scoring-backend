@@ -1,6 +1,5 @@
 package com.bhumi.eventscoring_backend;
 
-import com.bhumi.eventscoring_backend.dto.CategoryRequest;
 import com.bhumi.eventscoring_backend.dto.CategoryView;
 import com.bhumi.eventscoring_backend.dto.EventRequest;
 import com.bhumi.eventscoring_backend.model.Category;
@@ -10,11 +9,11 @@ import com.bhumi.eventscoring_backend.repository.CategoryRepository;
 import com.bhumi.eventscoring_backend.repository.EventRepository;
 import com.bhumi.eventscoring_backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,9 +32,6 @@ public class EventController {
 
     @PostMapping
     public Event createEvent(@RequestBody EventRequest request, Authentication authentication) {
-        // @RequestBody converts incoming JSON into an EventRequest object automatically.
-        // Authentication contains details of the currently logged-in user provided by Spring Security.
-
         String organizerEmail = authentication.getName();
         User organizer = userRepository.findAll().stream()
                 .filter(u -> u.getEmail().equals(organizerEmail))
@@ -63,23 +59,18 @@ public class EventController {
         return eventRepository.findAll();
     }
 
-    @PostMapping("/{id}/categories")
     // Maps this method to POST /api/events/{id}/categories for adding a category to a specific event.
-    // @PathVariable extracts the event ID from the URL.
-    // Finds the event with the given ID and returns it as an Optional.
-    // Optional may contain a value or be empty, preventing NullPointerException.
+    @PostMapping("/{id}/categories")
+    public ResponseEntity<?> addCategory(@PathVariable Long id, @RequestBody Category category) {
+        Event event = eventRepository.findById(id).orElseThrow();
 
-    public Category addCategory(@PathVariable Long id, @RequestBody CategoryRequest request) {
-        Optional<Event> eventOpt = eventRepository.findById(id);
-
-        if (eventOpt.isEmpty()) {
-            throw new RuntimeException("Event not found");
+        boolean exists = categoryRepository.existsByEventIdAndNameIgnoreCase(id, category.getName());
+        if (exists) {
+            return ResponseEntity.badRequest().body("A category with this name already exists for this event");
         }
 
-        Category category = new Category();
-        category.setName(request.getName());
-        category.setEvent(eventOpt.get());
-
-        return categoryRepository.save(category);
+        category.setEvent(event);
+        Category saved = categoryRepository.save(category);
+        return ResponseEntity.ok(saved);
     }
 }
