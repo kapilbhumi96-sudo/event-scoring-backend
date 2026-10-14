@@ -43,7 +43,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                 null,
                                 List.of(new SimpleGrantedAuthority("ROLE_" + role))
                         );
-               /* his is Spring Security's own internal way of representing "who is currently making
+               /* This is Spring Security's own internal way of representing "who is currently making
                   this request." You're building an object that says: "this request belongs to email,
                   and they hold the authority ROLE_ORGANIZER" (or whatever role it is).
                   The null in the middle is where a password would normally go — but since you already

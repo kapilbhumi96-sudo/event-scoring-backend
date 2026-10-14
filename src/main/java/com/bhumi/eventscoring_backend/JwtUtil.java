@@ -61,3 +61,6 @@ public class JwtUtil {
         }
     }
 }
+// The JWT contains a digital signature.
+//That signature is created using the secret key.
+//The server uses the same secret key later to verify that signature.
